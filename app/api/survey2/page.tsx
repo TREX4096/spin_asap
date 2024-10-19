@@ -79,7 +79,7 @@ const questions = [
     const handleSubmit = (selectedOptions: number[][]) => {
       console.log("Form submitted with the following options:", selectedOptions);
       // Redirect to /spin after submission
-      router.push('/spin');
+      router.push('/api/spin');
     };
   
     return (

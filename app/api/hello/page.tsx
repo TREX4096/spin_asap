@@ -96,7 +96,7 @@ export default function CareerFairSurvey() {
 
     if (response.ok) {
       const result = await response.json();
-      router.push('/thank-you'); // Redirect to a 'thank you' page
+      router.push('/api/spin'); // Redirect to a 'thank you' page
     } else {
       console.error('Failed to submit survey');
     }

@@ -90,7 +90,7 @@ const Survey1 = () => {
       console.log("Form submitted with the following options:", selectedOptions);
       // Only redirect if the router is ready
       if (isRouterReady) {
-        router.push('/spin');
+        router.push('/api/spin');
       }
     };
   
