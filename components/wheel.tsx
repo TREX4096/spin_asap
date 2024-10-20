@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
+import { useSession } from 'next-auth/react'; // Import useSession to access session data
 
 interface Scenario {
   scenario: string;
@@ -9,22 +10,35 @@ interface Scenario {
   tough: string;
   spinCommitment: number;
   careerPoints: number;
-
 }
 
 interface WheelProps {
   segments: Scenario[];
-  increaseSpinleft:()=>void
+  increaseSpinleft: () => void;
 }
 
 const Wheel: React.FC<WheelProps> = ({ segments }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { data: session } = useSession(); // Access session data
   const [angle, setAngle] = useState(0);
   const [isSpinning, setIsSpinning] = useState(false);
   const [currentScenario, setCurrentScenario] = useState<Scenario | null>(null);
-  const [careerPoints, setCareerPoints] = useState(0);
+  const [careerPoints, setCareerPoints] = useState(0); // Holds fetched career points
   const [spinsLeft, setSpinsLeft] = useState(10);
   const [gameOver, setGameOver] = useState(false);
+
+  // Fetch the user's career points
+  const fetchCareerPoints = async () => {
+    if (session) {
+      try {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/getPoints/${session?.user?.id}`);
+        setCareerPoints(response.data.careerPoints);
+        setSpinsLeft(response.data.spinsLeft) // Adjust based on your response structure
+      } catch (error) {
+        console.error('Error fetching career points:', error);
+      }
+    }
+  };
 
   const drawWheel = () => {
     const canvas = canvasRef.current;
@@ -64,7 +78,7 @@ const Wheel: React.FC<WheelProps> = ({ segments }) => {
     return 1 - Math.pow(1 - t, 3);
   };
 
-  const spinWheel = () => {
+  const spinWheel = async () => {
     if (isSpinning || spinsLeft <= 0) return;
 
     setCurrentScenario(null);
@@ -90,7 +104,9 @@ const Wheel: React.FC<WheelProps> = ({ segments }) => {
     };
 
     setIsSpinning(true);
-    setSpinsLeft(spinsLeft - 1);
+    setSpinsLeft((prevSpins) => prevSpins - 1);
+
+    // No need to update points here; it's handled after choices are made
     requestAnimationFrame(animate);
   };
 
@@ -102,21 +118,35 @@ const Wheel: React.FC<WheelProps> = ({ segments }) => {
       const correctedWinningIndex = (segments.length - winningIndex - 1 + segments.length) % segments.length;
       setCurrentScenario(segments[correctedWinningIndex]);
 
-      // Save to database (you may need to adjust this based on your API)
-      axios.post('/api/save', {
-        scenario: segments[correctedWinningIndex].scenario,
-        result: 'Not chosen yet',
-      }).catch((error) => {
-        console.error('Error saving data:', error);
-      });
+      // // Save to database (you may need to adjust this based on your API)
+      // axios.post('/api/save', {
+      //   scenario: segments[correctedWinningIndex].scenario,
+      //   result: 'Not chosen yet',
+      // }).catch((error) => {
+      //   console.error('Error saving data:', error);
+      // });
     }
   };
 
-  const makeChoice = (isTough: boolean) => {
+  const makeChoice = async (isTough: boolean) => {
     if (currentScenario) {
       if (isTough) {
-        setCareerPoints(careerPoints + currentScenario.careerPoints);
-        setSpinsLeft(spinsLeft - currentScenario.spinCommitment);
+        const newCareerPoints = careerPoints + currentScenario.careerPoints;
+        const newSpinsLeft = spinsLeft - currentScenario.spinCommitment;
+
+        try {
+          if (session) {
+            await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/updatePoints/${session?.user?.id}`, {
+              career_points: newCareerPoints,
+              spin_left: newSpinsLeft,
+            });
+          }
+        } catch (error) {
+          console.error('Error updating user points:', error);
+        }
+
+        setCareerPoints(newCareerPoints); // Update local state for the UI
+        setSpinsLeft(newSpinsLeft);
       }
       setCurrentScenario(null);
 
@@ -124,23 +154,27 @@ const Wheel: React.FC<WheelProps> = ({ segments }) => {
         setGameOver(true);
       }
 
-      // Update the database with the choice (you may need to adjust this based on your API)
-      axios.post('/api/update', {
-        scenario: currentScenario.scenario,
-        choice: isTough ? 'tough' : 'easy',
-      }).catch((error) => {
-        console.error('Error updating data:', error);
-      });
+      // // Update the database with the choice (you may need to adjust this based on your API)
+      // axios.post('/api/update', {
+      //   scenario: currentScenario.scenario,
+      //   choice: isTough ? 'tough' : 'easy',
+      // }).catch((error) => {
+      //   console.error('Error updating data:', error);
+      // });
     }
   };
 
   const resetGame = () => {
-    setCareerPoints(0);
+    setCareerPoints(0); // You might want to keep this as is if points are fetched
     setSpinsLeft(10);
     setCurrentScenario(null);
     setGameOver(false);
     setAngle(0);
   };
+
+  useEffect(() => {
+    fetchCareerPoints(); // Fetch career points when the session is available
+  }, [session]);
 
   useEffect(() => {
     drawWheel();

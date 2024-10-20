@@ -23,13 +23,28 @@ interface Form {
 
 export default function CareerFairSurvey() {
   const router = useRouter();
-  const [form, setForm] = useState<Form | null>(null); // State to hold a single form
+  const [form, setForm] = useState<Form | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentIndex, setCurrentIndex] = useState(0); 
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const { data: session, status } = useSession();
-  const userId = session?.user?.id;; // Hardcoded for now; can be dynamic
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
+
+  // New state to hold points
+  const [points, setPoints] = useState<number | null>(null);
+
+  // Fetch points from API
+  const fetchPoints = async () => {
+    if (userId) {
+      try {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/getPoints/${userId}`);
+        setPoints(response.data.points); // Assuming response contains a points field
+      } catch (error) {
+        console.error('Error fetching user points:', error);
+      }
+    }
+  };
 
   const handleSubmit = async (selectedOption: string, questionId: string) => {
     if (!selectedOption) {
@@ -43,26 +58,22 @@ export default function CareerFairSurvey() {
 
     try {
       const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/mark/${userId}`;
-      console.log(url);
-
       const body = {
         optionId: selectedOption,
         questionId: questionId,
       };
-      console.log(body);
-      const response = await axios.post(url, body);
 
+      const response = await axios.post(url, body);
       setSuccess("Your answer has been submitted successfully!");
-      console.log("Response:", response.data);
 
       // Move to the next question after successful submission
       if (currentIndex < (form?.questions.length || 0) - 1) {
         setCurrentIndex(currentIndex + 1);
       } else {
-        // Redirect to /api/spin after the last question
+        // After the last question, update completed forms and redirect
+        await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/updateCompletedForms/${userId}`, { form_no: 1 });
         router.push('/api/spin');
       }
-
     } catch (error) {
       setError("Error submitting answer. Please try again later.");
       console.error("Error submitting answer:", error);
@@ -75,34 +86,25 @@ export default function CareerFairSurvey() {
     const getForms = async () => {
       try {
         const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/getForm/${process.env.NEXT_PUBLIC_ADMIN_ID}`;
-  
         const response = await axios.get(url);
         const data: Form[] = response.data;
 
-        // Set form state to the second form fetched (data[1])
-        setForm(data[1]); // Adjust this if needed based on your data structure
-
+        setForm(data[1]); // Adjust if needed based on your data structure
       } catch (error: any) {
-        if (error.response) {
-          console.error('Error fetching forms:', error.response.status, error.response.data);
-        } else {
-          console.error('Error fetching forms:', error.message);
-        }
+        console.error('Error fetching forms:', error);
       } finally {
         setLoading(false);
       }
     };
 
     getForms();
+    fetchPoints(); // Fetch user points when the component mounts
   }, []); // Empty dependency array ensures this runs once when component mounts
 
   if (loading) return <div>Loading...</div>;
+  if (!form) return <div>No form available <br /><br />{userId}</div>;
 
-  if (!form) return <div>No form available <br></br><br></br>{userId}</div>; // Handle case when no form is available
-
-  const currentQuestion = form.questions[currentIndex]; // Get the current question
-
-  // Calculate progress as a percentage
+  const currentQuestion = form.questions[currentIndex];
   const progress = ((currentIndex + 1) / form.questions.length) * 100;
 
   return (
@@ -112,7 +114,7 @@ export default function CareerFairSurvey() {
         question={currentQuestion.question} 
         questionId={currentQuestion.questionId} 
         options={currentQuestion.options} 
-        handleSubmit={handleSubmit} // Pass handleSubmit to EachQuestion
+        handleSubmit={handleSubmit} 
       />
       <div>
         {currentIndex + 1} / {form.questions.length}
@@ -128,6 +130,8 @@ export default function CareerFairSurvey() {
           }}
         />
       </div>
+      {/* Display user points if available */}
+      {points !== null && <div>Your Points: {points}</div>}
     </div>
   );
 }

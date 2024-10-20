@@ -23,41 +23,39 @@ interface Form {
 
 export default function CareerFairSurvey() {
   const router = useRouter();
-  const [form, setForm] = useState<Form | null>(null); // State to hold a single form
+  const [form, setForm] = useState<Form | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentIndex, setCurrentIndex] = useState(0); 
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const { data: session, status } = useSession();
-  const userId = session?.user?.id;// Hardcoded for now; can be dynamic
+  const { data: session } = useSession();
+  const userId = session?.user?.id; // Ensure this is set correctly
 
   const handleSubmit = async (selectedOption: string, questionId: string) => {
     if (!selectedOption) {
       setError("Please select an option before submitting.");
       return;
     }
-    
+
+    setLoading(true);
     setError(null);
     setSuccess(null);
 
     try {
       const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/mark/${userId}`;
-      console.log(url);
-
       const body = {
         optionId: selectedOption,
         questionId: questionId,
       };
-      console.log(body);
+
       const response = await axios.post(url, body);
-
       setSuccess("Your answer has been submitted successfully!");
-      console.log("Response:", response.data);
 
-if (currentIndex < (form?.questions.length || 0) - 1) {
+      if (currentIndex < (form?.questions.length || 0) - 1) {
         setCurrentIndex(currentIndex + 1);
       } else {
-        // Redirect to /api/spin after the last question
+        // After the last question, update completed forms and redirect
+        await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/updateCompletedForms/${userId}`, { form_no: 2 });
         router.push('/api/spin');
       }
 
@@ -71,47 +69,39 @@ if (currentIndex < (form?.questions.length || 0) - 1) {
 
   useEffect(() => {
     const getForms = async () => {
+      setLoading(true); // Set loading true before fetching
       try {
         const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/getForm/${process.env.NEXT_PUBLIC_ADMIN_ID}`;
-  
         const response = await axios.get(url);
         const data: Form[] = response.data;
 
-        // Set form state to the first form fetched
-        setForm(data[2]); // Assuming data is in the expected format
+        // Set form state to the second form fetched (data[2])
+        setForm(data[2]); // Adjust this if needed based on your data structure
 
       } catch (error: any) {
-        if (error.response) {
-          console.error('Error fetching forms:', error.response.status, error.response.data);
-        } else {
-          console.error('Error fetching forms:', error.message);
-        }
+        console.error('Error fetching forms:', error.response ? `${error.response.status}: ${error.response.data}` : error.message);
       } finally {
         setLoading(false);
       }
     };
 
     getForms();
-  }, []); // Empty dependency array ensures this runs once when component mounts
+  }, []); // Runs once when the component mounts
 
   if (loading) return <div>Loading...</div>;
+  if (!form) return <div>No form available</div>;
 
-  if (!form) return <div>No form available</div>; // Handle case when no form is available
-
-  const currentQuestion = form.questions[currentIndex]; // Get the current question
-
-  // Calculate progress as a percentage
+  const currentQuestion = form.questions[currentIndex];
   const progress = ((currentIndex + 1) / form.questions.length) * 100;
 
   return (
     <div>
-      <TopBar username={session?.user?.id}></TopBar>
-      {userId}<br></br>
+      <TopBar username={session?.user?.id} />
       <EachQuestion 
         question={currentQuestion.question} 
         questionId={currentQuestion.questionId} 
         options={currentQuestion.options} 
-        handleSubmit={handleSubmit} // Pass handleSubmit to EachQuestion
+        handleSubmit={handleSubmit} 
       />
       <div>
         {currentIndex + 1} / {form.questions.length}
@@ -127,6 +117,8 @@ if (currentIndex < (form?.questions.length || 0) - 1) {
           }}
         />
       </div>
+      {error && <div className="error-message">{error}</div>} {/* Display error message */}
+      {success && <div className="success-message">{success}</div>} {/* Display success message */}
     </div>
   );
 }
