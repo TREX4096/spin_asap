@@ -10,7 +10,7 @@ interface Scenario {
   easy: string;
   tough: string;
   spinCommitment: number;
-  careerPoints: number;
+  careerPoints: number;  
 }
 
 const CareerDecisionPage: React.FC = () => {
@@ -92,13 +92,14 @@ const CareerDecisionPage: React.FC = () => {
   const handleToggleLeaderboard = () => {
     setShowLeaderboard((prev) => !prev); // Toggle the leaderboard visibility
   };
+  
 
   return (
     <div className="relative py-3 sm:max-w-xl sm:mx-auto">
       <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-light-blue-500 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:-rotate-6 sm:rounded-3xl"></div>
       <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-20">
         <h1 className="text-4xl font-bold text-center mb-8">Career Decision Game</h1>
-        <Wheel segments={scenarios} />
+        <Wheel segments={scenarios}  />
         <button
           onClick={handleToggleLeaderboard}
           className="mt-6 bg-green-500 text-white rounded px-4 py-2"
@@ -107,7 +108,7 @@ const CareerDecisionPage: React.FC = () => {
         </button>
       </div>
       <div className='justify-left'>
-        <PopupGfg />
+      <PopupGfg  />
       </div>
 
       {/* Leaderboard Popup */}

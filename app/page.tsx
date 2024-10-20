@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Popup from "@/components/generalpopup";
 import { FaQuestionCircle } from 'react-icons/fa';
 
+
 export default function Home() {
   const [isPopupOpen, setPopupOpen] = useState(false);
 
@@ -15,6 +16,7 @@ export default function Home() {
   };
 
   return (
+   
     <div className="flex flex-col items-center justify-center h-screen">
       <h1 className="text-4xl font-bold">Welcome to the Game!</h1>
       <button 
@@ -32,5 +34,5 @@ export default function Home() {
 
       {isPopupOpen && <Popup onClose={handlePopupClose} />}
     </div>
-  );
+      );
 }

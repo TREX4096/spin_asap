@@ -9,9 +9,9 @@ const PopupGfg = ({
   title = "GeeksforGeeks",
   content = "This is a simple popup example.",
   button1Text = "Go to Page 1",
-  button1Route = "/page1",
+  button1Route = "/api/survey1",
   button2Text = "Go to Page 2",
-  button2Route = "/page2"
+  button2Route = "/api/survey2"
 }) => {
   const router = useRouter();
 

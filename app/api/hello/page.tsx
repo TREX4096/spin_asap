@@ -55,6 +55,9 @@ export default function CareerFairSurvey() {
       // Move to the next question after successful submission
       if (currentIndex < (form?.questions.length || 0) - 1) {
         setCurrentIndex(currentIndex + 1);
+      } else {
+        // Redirect to /api/spin after the last question
+        router.push('/api/spin');
       }
 
     } catch (error) {

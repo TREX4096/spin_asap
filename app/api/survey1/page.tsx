@@ -55,6 +55,9 @@ export default function CareerFairSurvey() {
       // Move to the next question after successful submission
       if (currentIndex < (form?.questions.length || 0) - 1) {
         setCurrentIndex(currentIndex + 1);
+      } else {
+        // Redirect to /api/spin after the last question
+        router.push('/api/spin');
       }
 
     } catch (error) {
@@ -73,8 +76,8 @@ export default function CareerFairSurvey() {
         const response = await axios.get(url);
         const data: Form[] = response.data;
 
-        // Set form state to the first form fetched
-        setForm(data[1]); // Assuming data is in the expected format
+        // Set form state to the second form fetched (data[1])
+        setForm(data[1]); // Adjust this if needed based on your data structure
 
       } catch (error: any) {
         if (error.response) {

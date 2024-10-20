@@ -9,10 +9,12 @@ interface Scenario {
   tough: string;
   spinCommitment: number;
   careerPoints: number;
+
 }
 
 interface WheelProps {
   segments: Scenario[];
+  increaseSpinleft:()=>void
 }
 
 const Wheel: React.FC<WheelProps> = ({ segments }) => {
@@ -114,11 +116,11 @@ const Wheel: React.FC<WheelProps> = ({ segments }) => {
     if (currentScenario) {
       if (isTough) {
         setCareerPoints(careerPoints + currentScenario.careerPoints);
-        setSpinsLeft(spinsLeft + currentScenario.spinCommitment);
+        setSpinsLeft(spinsLeft - currentScenario.spinCommitment);
       }
       setCurrentScenario(null);
 
-      if (spinsLeft === 0) {
+      if (spinsLeft <= 0) {
         setGameOver(true);
       }
 

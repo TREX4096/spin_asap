@@ -52,9 +52,11 @@ export default function CareerFairSurvey() {
       setSuccess("Your answer has been submitted successfully!");
       console.log("Response:", response.data);
 
-      // Move to the next question after successful submission
-      if (currentIndex < (form?.questions.length || 0) - 1) {
+if (currentIndex < (form?.questions.length || 0) - 1) {
         setCurrentIndex(currentIndex + 1);
+      } else {
+        // Redirect to /api/spin after the last question
+        router.push('/api/spin');
       }
 
     } catch (error) {
