@@ -1,93 +1,126 @@
 "use client";
-import React, { useState } from 'react';
-import Page1 from '@/components/survey'; // Adjust the path if necessary
-import { useRouter } from 'next/navigation'; 
+import { useEffect, useState } from "react";
+import { useRouter } from 'next/navigation';
+import axios from 'axios';
+import EachQuestion from "@/components/option";
 
-// Define your questions here
-const questions = [
-    {
-      question: "Which headline catches your attention the most when flipping through a college brochure?",
-      questionArabic: "أي عنوان يجذب انتباهك أكثر عندما تتصفح كتيب الكلية؟",
-      options: [
-        { text: "Explore the World of Science and Innovation!", textArabic: "استكشف عالم العلوم والابتكار!" },
-        { text: "Unleash Your Creativity with Our Design Programs!", textArabic: "أطلق العنان لإبداعك مع برامج التصميم لدينا!" },
-        { text: "Become a Business Leader with Our Management Courses!", textArabic: "كن قائدًا في الأعمال مع دورات الإدارة لدينا!" },
-        { text: "Delve into Culture and Society with Our Humanities Studies!", textArabic: "تعرف على الثقافة والمجتمع من خلال دراسات العلوم الإنسانية لدينا!" }
-      ],
-      correctAnswers: [],  // No correct answers for aspiration questions
-      multiSelect: false
-    },
-    {
-      question: "If you have a free afternoon at college, where are you most likely to spend your time?",
-      questionArabic: "إذا كان لديك فترة بعد الظهر خالية في الكلية، أين من المرجح أن تقضي وقتك؟",
-      options: [
-        { text: "In a high-tech lab, experimenting with new ideas.", textArabic: "في مختبر عالي التقنية، تجربة أفكار جديدة." },
-        { text: "In the art studio, creating something unique.", textArabic: "في استوديو الفن، ابتكار شيء فريد." },
-        { text: "In a networking session with entrepreneurs.", textArabic: "في جلسة تواصل مع رواد الأعمال." },
-        { text: "In a study circle discussing global history.", textArabic: "في حلقة دراسة تناقش التاريخ العالمي." }
-      ],
-      correctAnswers: [],
-      multiSelect: false
-    },
-    {
-      question: "As a first-year college student, what excites you the most about exploring new horizons?",
-      questionArabic: "أنت في سنتك الأولى في الكلية، ما الذي يحمسك أكثر لاستكشاف آفاق جديدة؟",
-      options: [
-        { text: "A research internship at a top firm.", textArabic: "تدريب بحثي في شركة رائدة." },
-        { text: "Participating in a student-run club or society.", textArabic: "المشاركة في نادٍ أو جمعية يديرها الطلاب." },
-        { text: "A semester exchange program in another country.", textArabic: "برنامج تبادل دراسي في بلد آخر." },
-        { text: "Working closely with professors on an exciting project.", textArabic: "العمل بشكل وثيق مع الأساتذة على مشروع مثير." }
-      ],
-      correctAnswers: [],
-      multiSelect: false
-    },
-    {
-      question: "Which scene outside of classes best reflects your college life?",
-      questionArabic: "أي مشهد خارج الفصول الدراسية يعكس حياتك الجامعية بشكل أفضل؟",
-      options: [
-        { text: "Attending college festivals and bonding with peers.", textArabic: "حضور مهرجانات الكلية والتواصل مع الزملاء." },
-        { text: "Engaging in workshops that help you learn new skills.", textArabic: "المشاركة في ورش عمل تساعدك على تعلم مهارات جديدة." },
-        { text: "Discovering new cafes and hidden spots around campus.", textArabic: "اكتشاف مقاهي وأماكن مخفية جديدة حول الحرم الجامعي." },
-        { text: "Relaxing in your dorm room with a good book or game.", textArabic: "الاسترخاء في غرفة السكن الخاصة بك مع كتاب جيد أو لعبة." }
-      ],
-      correctAnswers: [],
-      multiSelect: false
-    },
-    {
-      question: "If your college offers an extra opportunity to enhance your journey, which one would you choose?",
-      questionArabic: "إذا كانت كليتك تقدم فرصة إضافية لتعزيز رحلتك، أي منها ستختار؟",
-      options: [
-        { text: "A certification course that complements your studies.", textArabic: "دورة شهادة تكمل دراستك." },
-        { text: "A short course that allows you to explore a new interest.", textArabic: "دورة قصيرة تسمح لك باستكشاف اهتمام جديد." },
-        { text: "An intensive workshop that provides hands-on experience.", textArabic: "ورشة عمل مكثفة توفر تجربة عملية." },
-        { text: "An in-depth project that lets you dive deeper into your major.", textArabic: "مشروع معمق يسمح لك بالتعمق أكثر في تخصصك." }
-      ],
-      correctAnswers: [],
-      multiSelect: false
+interface Option {
+  id: string;
+  option: string;
+}
+
+interface Question {
+  question: string;
+  questionId: string;
+  options: Option[];
+}
+
+interface Form {
+  questions: Question[];
+}
+
+export default function CareerFairSurvey() {
+  const router = useRouter();
+  const [form, setForm] = useState<Form | null>(null); // State to hold a single form
+  const [loading, setLoading] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0); 
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const userId = "dac99d66-7993-44c1-ae5e-e60e7f42b67f"; // Hardcoded for now; can be dynamic
+
+  const handleSubmit = async (selectedOption: string, questionId: string) => {
+    if (!selectedOption) {
+      setError("Please select an option before submitting.");
+      return;
     }
-  ];
-  
 
-  const Survey2 = () => {
-    const [progress, setProgress] = useState(questions.length); // Track remaining questions
-    const router = useRouter(); // Initialize router for navigation
-  
-    const handleProgressUpdate = (remaining: number) => {
-      setProgress(remaining);
-    };
-  
-    const handleSubmit = (selectedOptions: number[][]) => {
-      console.log("Form submitted with the following options:", selectedOptions);
-      // Redirect to /spin after submission
-      router.push('/api/spin');
-    };
-  
-    return (
-      <div>
-        <h1 className="text-2xl font-bold mb-4">Survey</h1>
-        <Page1 questions={questions} onProgressUpdate={handleProgressUpdate} onSubmit={handleSubmit} />
-        <p className="mt-4">Remaining questions: {progress}</p>
-      </div>
-    );
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/mark/${userId}`;
+      console.log(url);
+
+      const body = {
+        optionId: selectedOption,
+        questionId: questionId,
+      };
+      console.log(body);
+      const response = await axios.post(url, body);
+
+      setSuccess("Your answer has been submitted successfully!");
+      console.log("Response:", response.data);
+
+      // Move to the next question after successful submission
+      if (currentIndex < (form?.questions.length || 0) - 1) {
+        setCurrentIndex(currentIndex + 1);
+      }
+
+    } catch (error) {
+      setError("Error submitting answer. Please try again later.");
+      console.error("Error submitting answer:", error);
+    } finally {
+      setLoading(false);
+    }
   };
-export default Survey2;
+
+  useEffect(() => {
+    const getForms = async () => {
+      try {
+        const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/getForm/${process.env.NEXT_PUBLIC_ADMIN_ID}`;
+  
+        const response = await axios.get(url);
+        const data: Form[] = response.data;
+
+        // Set form state to the first form fetched
+        setForm(data[2]); // Assuming data is in the expected format
+
+      } catch (error: any) {
+        if (error.response) {
+          console.error('Error fetching forms:', error.response.status, error.response.data);
+        } else {
+          console.error('Error fetching forms:', error.message);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getForms();
+  }, []); // Empty dependency array ensures this runs once when component mounts
+
+  if (loading) return <div>Loading...</div>;
+
+  if (!form) return <div>No form available</div>; // Handle case when no form is available
+
+  const currentQuestion = form.questions[currentIndex]; // Get the current question
+
+  // Calculate progress as a percentage
+  const progress = ((currentIndex + 1) / form.questions.length) * 100;
+
+  return (
+    <div>
+      <EachQuestion 
+        question={currentQuestion.question} 
+        questionId={currentQuestion.questionId} 
+        options={currentQuestion.options} 
+        handleSubmit={handleSubmit} // Pass handleSubmit to EachQuestion
+      />
+      <div>
+        {currentIndex + 1} / {form.questions.length}
+      </div>
+      <div className="progress-bar" style={{ width: '100%', backgroundColor: '#e0e0e0', borderRadius: '5px', marginTop: '20px' }}>
+        <div 
+          className="progress" 
+          style={{
+            width: `${progress}%`, 
+            height: '10px', 
+            backgroundColor: '#3b82f6', 
+            borderRadius: '5px'
+          }}
+        />
+      </div>
+    </div>
+  );
+}
