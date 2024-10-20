@@ -1,6 +1,7 @@
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import type { NextAuthOptions } from 'next-auth';
+import axios from 'axios';
 
 interface Credentials {
   email: string;
@@ -32,43 +33,57 @@ export const NEXT_AUTH_CONFIG: NextAuthOptions = {
         },
       },
       async authorize(credentials) {
-        // Check if credentials are defined
         if (!credentials) {
-          return null; // Return null if credentials are not provided
+          return null;
         }
+        
 
-        const { email, name } = credentials as Credentials;
+        try {
+          // Register the user in your backend
+          const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/register`, {
+            name: credentials.name,
+            email: credentials.email,
+            gender: credentials.gender,
+            age: credentials.age,
+          });
 
-        // Example: Replace this with actual user lookup logic
-        if (email === 'test@example.com' && name === 'Raj') {
+          if (!response.data || !response.data.userId) {
+            return null; // If no userId is returned
+          }
+
+          // Return user object for NextAuth
           return {
-            id: "user1",
-            username: "testuser",
-            userId: "user1",
-            email,
+            id: response.data.userId, // Use 'id' for consistency
+            name: credentials.name,
+            email: credentials.email,
           };
-        } else {
-          return null; // Return null if user credentials are incorrect
+
+        } catch (error) {
+          console.error('Error during user registration:', error);
+          return null;
         }
       },
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
-    jwt: async ({ user, token }) => {
+    // Add userId to JWT token
+    jwt: async ({ token, user }) => {
       if (user) {
-        token.uid = user.id; // Add user ID to the token
+        token.userId = user.id; // Attach the userId to the JWT
       }
       return token;
     },
+    // Add userId to the session object
     session: async ({ session, token }) => {
-    //   if (token && session.user) {
-    //     session.user.id = token.uid; // Attach user ID to session
-    //   }
+      if (token && session.user) {
+        
+        session.user.id = token.userId; // Attach userId from JWT to the session
+      }
       return session;
     },
   },
   pages: {
-    signIn: '/signin', // Custom sign-in page
+    signIn: '/signin',
   },
 };

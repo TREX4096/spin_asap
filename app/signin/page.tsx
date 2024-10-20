@@ -9,7 +9,6 @@ const SignInPage = () => {
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('male');
-  const [password, setPassword] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,7 +17,6 @@ const SignInPage = () => {
       name,
       age,
       gender,
-      password,
       redirect: false, // Prevent redirection
     });
 
@@ -26,7 +24,7 @@ const SignInPage = () => {
       alert('Invalid credentials');
     } else {
       // Redirect to homepage or wherever you want after successful login
-      window.location.href = '/';
+      window.location.href = '/api/hello';
     }
   };
 
@@ -86,18 +84,6 @@ const SignInPage = () => {
             <option value="female">Female</option>
             <option value="other">Other</option>
           </select>
-        </div>
-        <div className="mb-4">
-          <label htmlFor="password" className="block text-sm font-medium mb-2">Password</label>
-          <input
-            type="password"
-            id="password"
-            placeholder="Enter your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="border border-gray-300 rounded p-2 w-full"
-            required
-          />
         </div>
         <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
           Sign In

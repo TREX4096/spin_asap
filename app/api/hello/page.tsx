@@ -1,7 +1,9 @@
-"use client";
+"use client"; // Ensure this component runs on the client
+
 import { useEffect, useState } from "react";
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import { useSession } from 'next-auth/react';
 import EachQuestion from "@/components/option";
 
 interface Option {
@@ -21,16 +23,25 @@ interface Form {
 
 export default function CareerFairSurvey() {
   const router = useRouter();
-  const [form, setForm] = useState<Form | null>(null); // State to hold a single form
+  const [form, setForm] = useState<Form | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentIndex, setCurrentIndex] = useState(0); 
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const userId = "dac99d66-7993-44c1-ae5e-e60e7f42b67f"; // Hardcoded for now; can be dynamic
+  const { data: session, status } = useSession();
+
+  // Ensure userId is available
+  const userId = session?.user?.id;
+  console.log("userId : "+userId)
 
   const handleSubmit = async (selectedOption: string, questionId: string) => {
     if (!selectedOption) {
       setError("Please select an option before submitting.");
+      return;
+    }
+
+    if (!userId) {
+      setError("User ID is not available. Please sign in again.");
       return;
     }
 
@@ -40,26 +51,17 @@ export default function CareerFairSurvey() {
 
     try {
       const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/mark/${userId}`;
-      console.log(url);
+      const body = { optionId: selectedOption, questionId };
 
-      const body = {
-        optionId: selectedOption,
-        questionId: questionId,
-      };
-      console.log(body);
       const response = await axios.post(url, body);
-
       setSuccess("Your answer has been submitted successfully!");
-      console.log("Response:", response.data);
 
       // Move to the next question after successful submission
       if (currentIndex < (form?.questions.length || 0) - 1) {
-        setCurrentIndex(currentIndex + 1);
+        setCurrentIndex((prevIndex) => prevIndex + 1);
       } else {
-        // Redirect to /api/spin after the last question
-        router.push('/api/spin');
+        router.push('/api/spin'); // Redirect after the last question
       }
-
     } catch (error) {
       setError("Error submitting answer. Please try again later.");
       console.error("Error submitting answer:", error);
@@ -72,43 +74,42 @@ export default function CareerFairSurvey() {
     const getForms = async () => {
       try {
         const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/getForm/${process.env.NEXT_PUBLIC_ADMIN_ID}`;
-  
         const response = await axios.get(url);
         const data: Form[] = response.data;
 
-        // Set form state to the first form fetched
-        setForm(data[0]); // Assuming data is in the expected format
-
-      } catch (error: any) {
-        if (error.response) {
-          console.error('Error fetching forms:', error.response.status, error.response.data);
+        if (data.length > 0) {
+          setForm(data[0]); // Set the first form fetched
         } else {
-          console.error('Error fetching forms:', error.message);
+          setError("No forms found.");
         }
+      } catch (error: any) {
+        setError(error.response?.data?.message || "Error fetching forms.");
+        console.error('Error fetching forms:', error);
       } finally {
         setLoading(false);
       }
     };
 
     getForms();
-  }, []); // Empty dependency array ensures this runs once when component mounts
+  }, []); // Runs once when component mounts
 
+  // Handle different states for the session
+  if (status === "loading") return <div>Loading session...</div>;
+  if (!session) return <div>Please sign in to participate in the survey.</div>;
   if (loading) return <div>Loading...</div>;
-
-  if (!form) return <div>No form available</div>; // Handle case when no form is available
+  if (!form) return <div> {userId}        <br></br><br></br>No form available</div>; // Handle case when no form is available
 
   const currentQuestion = form.questions[currentIndex]; // Get the current question
-
-  // Calculate progress as a percentage
-  const progress = ((currentIndex + 1) / form.questions.length) * 100;
+  const progress = ((currentIndex + 1) / form.questions.length) * 100; // Calculate progress
 
   return (
     <div>
+      <div>{userId}</div>
       <EachQuestion 
         question={currentQuestion.question} 
         questionId={currentQuestion.questionId} 
         options={currentQuestion.options} 
-        handleSubmit={handleSubmit} // Pass handleSubmit to EachQuestion
+        handleSubmit={handleSubmit}
       />
       <div>
         {currentIndex + 1} / {form.questions.length}
@@ -124,6 +125,8 @@ export default function CareerFairSurvey() {
           }}
         />
       </div>
+      {error && <div style={{ color: 'red' }}>{error}</div>}
+      {success && <div style={{ color: 'green' }}>{success}</div>}
     </div>
   );
 }
