@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { useSession } from 'next-auth/react';
 import EachQuestion from "@/components/option";
+import TopBar from "@/components/topbar";
 
 interface Option {
   id: string;
@@ -104,6 +105,7 @@ export default function CareerFairSurvey() {
 
   return (
     <div>
+      <TopBar username={session?.user?.id}></TopBar>
       <div>{userId}</div>
       <EachQuestion 
         question={currentQuestion.question} 

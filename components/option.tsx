@@ -1,5 +1,4 @@
 import { useState } from "react";
-import axios from "axios";
 
 interface Option {
   id: string;
@@ -10,11 +9,10 @@ interface QuestionProps {
   question: string;
   questionId: string;
   options: Option[];
-  handleSubmit: (optionId: string, questionId: string) => Promise<void>; // Define the prop type
+  handleSubmit: (optionId: string, questionId: string) => Promise<void>;
 }
 
-export default function EachQuestion({ question, questionId, options, handleSubmit }: QuestionProps) {
-  const userId = "dac99d66-7993-44c1-ae5e-e60e7f42b67f"; // Hardcoded for now; can be dynamic
+export default function EachQuestion({ question, questionId, options, handleSubmit }: QuestionProps) { 
   const [selectedOption, setSelectedOption] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,8 +29,10 @@ export default function EachQuestion({ question, questionId, options, handleSubm
     setSuccess(null);
 
     try {
-      await handleSubmit(selectedOption, questionId); // Call the handleSubmit function passed as a prop
+      await handleSubmit(selectedOption, questionId); 
+      console.log(questionId,selectedOption)// Call the handleSubmit function passed as a prop
       setSuccess("Your answer has been submitted successfully!");
+      setSelectedOption(""); // Reset selection after submission
     } catch (error) {
       setError("Error submitting answer. Please try again later.");
       console.error("Error submitting answer:", error);
@@ -44,19 +44,24 @@ export default function EachQuestion({ question, questionId, options, handleSubm
   return (
     <div>
       <p>{question}</p>
-      <label htmlFor={`question-${questionId}`}>Select an option:</label>
-      <select
-        id={`question-${questionId}`}
-        value={selectedOption}
-        onChange={(e) => setSelectedOption(e.target.value)}
-      >
-        <option value="" disabled>Select an option</option>
+      <h3>{questionId}</h3>
+      <label>Select an option:</label>
+      <div>
         {options.map((opt) => (
-          <option key={opt.id} value={opt.id}>
-            {opt.option}
-          </option>
+          <div key={opt.id}>
+            <h1>{opt.id}</h1>
+            <input
+              type="radio"
+              id={`option-${opt.id}`}
+              name={`question-${questionId}`}
+              value={opt.id}
+              checked={selectedOption === opt.id}
+              onChange={() => setSelectedOption(opt.id)} // Update selected option
+            />
+            <label htmlFor={`option-${opt.id}`}>{opt.option}</label>
+          </div>
         ))}
-      </select>
+      </div>
       <button onClick={onSubmit} disabled={loading}>
         {loading ? "Submitting..." : "Next"}
       </button>

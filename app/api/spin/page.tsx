@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import Wheel from '/home/trex4096/Desktop/Projects/spin_the_wheel/frontend/components/wheels';
 import PopupGfg from '@/components/popup';
 import LeaderboardPopup from '@/components/leaderboard'; // Adjust the import path as necessary
+import TopBar from '@/components/topbar';
+import { useSession } from 'next-auth/react';
 
 interface Scenario {
   scenario: string;
@@ -14,7 +16,8 @@ interface Scenario {
 }
 
 const CareerDecisionPage: React.FC = () => {
-  const [showLeaderboard, setShowLeaderboard] = useState(false); // State to control the leaderboard popup
+  const [showLeaderboard, setShowLeaderboard] = useState(false); 
+  const { data: session, status } = useSession();// State to control the leaderboard popup
 
   const scenarios: Scenario[] = [
     {
@@ -96,6 +99,7 @@ const CareerDecisionPage: React.FC = () => {
 
   return (
     <div className="relative py-3 sm:max-w-xl sm:mx-auto">
+      <TopBar username={session?.user?.id}></TopBar>
       <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-light-blue-500 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:-rotate-6 sm:rounded-3xl"></div>
       <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-20">
         <h1 className="text-4xl font-bold text-center mb-8">Career Decision Game</h1>

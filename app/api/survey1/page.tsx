@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import EachQuestion from "@/components/option";
+import { useSession } from "next-auth/react";
+import TopBar from "@/components/topbar";
 
 interface Option {
   id: string;
@@ -26,7 +28,8 @@ export default function CareerFairSurvey() {
   const [currentIndex, setCurrentIndex] = useState(0); 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const userId = "dac99d66-7993-44c1-ae5e-e60e7f42b67f"; // Hardcoded for now; can be dynamic
+  const { data: session, status } = useSession();
+  const userId = session?.user?.id;; // Hardcoded for now; can be dynamic
 
   const handleSubmit = async (selectedOption: string, questionId: string) => {
     if (!selectedOption) {
@@ -95,7 +98,7 @@ export default function CareerFairSurvey() {
 
   if (loading) return <div>Loading...</div>;
 
-  if (!form) return <div>No form available</div>; // Handle case when no form is available
+  if (!form) return <div>No form available <br></br><br></br>{userId}</div>; // Handle case when no form is available
 
   const currentQuestion = form.questions[currentIndex]; // Get the current question
 
@@ -104,6 +107,7 @@ export default function CareerFairSurvey() {
 
   return (
     <div>
+      <TopBar username={session?.user?.id}></TopBar>
       <EachQuestion 
         question={currentQuestion.question} 
         questionId={currentQuestion.questionId} 
