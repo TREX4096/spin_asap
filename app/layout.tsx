@@ -2,6 +2,9 @@
 
 import localFont from "next/font/local";
 import "./globals.css";
+
+import {AppModeContextProvider} from "../context/appMode"
+import {AdminContextProvider} from "../context/adminContext"
 import { SessionProvider } from "next-auth/react";
 import { TbLayoutNavbar } from "react-icons/tb";
 
@@ -23,9 +26,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <SessionProvider>
+          <AdminContextProvider>
+        <AppModeContextProvider>
           {children}
+           </AppModeContextProvider>
+        </AdminContextProvider>
         </SessionProvider>
       </body>
     </html>
