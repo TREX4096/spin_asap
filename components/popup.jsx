@@ -1,19 +1,50 @@
 'use client'
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
 import { useRouter } from 'next/navigation';
+import axios from 'axios';
+import { useSession } from "next-auth/react";
 
 const PopupGfg = ({
-  title = "GeeksforGeeks",
-  content = "This is a simple popup example.",
-  button1Text = "Go to Page 1",
-  button1Route = "/page1",
-  button2Text = "Go to Page 2",
-  button2Route = "/page2"
+  title = "Get Bonus Spin Points",
+  content = "Select a survey to complete."
 }) => {
   const router = useRouter();
+  const { data: session } = useSession(); // Use useSession to get the user session
+  const [formRoutes, setFormRoutes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchUncompletedForms = async () => {
+      if (!session) {
+        setError("User session not found.");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/getuncompletedForms/${session.user.id}`; // Remove colon
+        const response = await axios.post(url);
+        
+        // Assuming the response contains an array of valid form indices
+        const validFormRoutes = response.data
+          .filter((index) => index > 1) // Ensure the index is a number
+          .map((index) => `/api/survey${index}`); // Map to appropriate route
+
+        setFormRoutes(validFormRoutes);
+      } catch (error) {
+        setError("Error fetching forms. Please try again later.");
+        console.error("Error fetching uncompleted forms:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUncompletedForms();
+  }, [session]); // Add session as a dependency
 
   const handleNavigation = (route, close) => {
     close();
@@ -35,22 +66,23 @@ const PopupGfg = ({
             </button>
             <div className="header">{title}</div>
             <div className="content">
-              {content}
-            </div>
-            <div className="actions">
-              
-              <button 
-                className="button" 
-                onClick={() => handleNavigation(button1Route, close)}
-              >
-                {button1Text}
-              </button>
-              <button 
-                className="button" 
-                onClick={() => handleNavigation(button2Route, close)}
-              >
-                {button2Text}
-              </button>
+              {loading ? (
+                <div>Loading...</div>
+              ) : error ? (
+                <div>{error}</div>
+              ) : formRoutes.length > 0 ? (
+                formRoutes.map((route, index) => (
+                  <button 
+                    key={index} 
+                    className="button" 
+                    onClick={() => handleNavigation(route, close)}
+                  >
+                    Go to {route}
+                  </button>
+                ))
+              ) : (
+                <div>No uncompleted forms available.</div>
+              )}
             </div>
           </div>
         )}
