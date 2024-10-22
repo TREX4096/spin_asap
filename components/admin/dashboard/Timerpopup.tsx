@@ -15,7 +15,7 @@ const getValues = (externalValue: string): string[] => {
         case "hours":
             return Array.from({ length: 24 }, (_, i) => (i + 1).toString()); // Returns ["1", "2", ..., "24"]
         case "minutes":
-            return ["15", "30", "45"]; // Returns ["15", "30", "45"]
+            return ["2", "3", "5"]; // Returns ["15", "30", "45"]
         default:
             return []; // Return an empty array for any other value
     }
@@ -40,16 +40,16 @@ const Popup: React.FC<PopupProps> = ({ onClose }) => {
 
         const requestData = {
             functionToRun: 'sendReminderEmail',
-            startTime: Date.now(),
+            startTime:  new Date(Date.now()).toISOString(),
             durationValue: parseInt(value),
             durationUnit: unit
           };
 
+          console.log(requestData);
 
         try {
-        //   const response = await axios.post('YOUR_API_ENDPOINT', requestData);
-        //   console.log('Response:', response.data);
-        console.log(requestData);
+          const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/putTimer/${process.env.NEXT_PUBLIC_ADMIN_ID}`, requestData);
+          console.log('Response:', response.data);
         
         } catch (error:any) {
           if (error.response) {

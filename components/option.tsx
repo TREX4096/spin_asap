@@ -1,4 +1,5 @@
 import { useState } from "react";
+import axios from "axios";
 
 interface Option {
   id: string;
@@ -9,10 +10,14 @@ interface QuestionProps {
   question: string;
   questionId: string;
   options: Option[];
-  handleSubmit: (optionId: string, questionId: string) => Promise<void>;
+  ismarked: Boolean;
+  set_Selected_Option:(value:boolean)=>void
+  userId: string | null ;
+  formId: string;
+
 }
 
-export default function EachQuestion({ question, questionId, options, handleSubmit }: QuestionProps) { 
+export default function EachQuestion({ question, questionId, options, userId, formId,ismarked,set_Selected_Option}: QuestionProps) {
   const [selectedOption, setSelectedOption] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,16 +28,44 @@ export default function EachQuestion({ question, questionId, options, handleSubm
       setError("Please select an option before submitting.");
       return;
     }
-
     setLoading(true);
     setError(null);
     setSuccess(null);
 
     try {
-      await handleSubmit(selectedOption, questionId); 
-      console.log(questionId,selectedOption)// Call the handleSubmit function passed as a prop
-      setSuccess("Your answer has been submitted successfully!");
-      setSelectedOption(""); // Reset selection after submission
+      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/mark/${userId}`;
+      const body = {
+        formId: formId,
+        questionId: questionId,
+        optionId: selectedOption
+      };
+
+      console.log(body);
+      
+      if(ismarked===true){
+        setError("This Question has been already marked by You.");
+      }
+      else{
+      const response = await axios.post(url, body);
+      console.log(response);
+
+      if (response.status === 200) {
+        setSuccess("Your answer has been submitted successfully!");
+        setSelectedOption(""); // Reset selection after submission
+        set_Selected_Option(true)
+      }
+      else if (response.status === 202) {
+        setSuccess("This Question has been already marked by You.");
+        set_Selected_Option(true)
+        setSelectedOption(""); // Reset selection after submission
+
+      }
+      else {
+        console.log(response);
+
+      }
+
+    }
     } catch (error) {
       setError("Error submitting answer. Please try again later.");
       console.error("Error submitting answer:", error);
@@ -44,27 +77,30 @@ export default function EachQuestion({ question, questionId, options, handleSubm
   return (
     <div>
       <p>{question}</p>
-      <h3>{questionId}</h3>
+      <h3>Question ID: {questionId}</h3>
       <label>Select an option:</label>
       <div>
         {options.map((opt) => (
           <div key={opt.id}>
-            <h1>{opt.id}</h1>
             <input
               type="radio"
               id={`option-${opt.id}`}
               name={`question-${questionId}`}
               value={opt.id}
               checked={selectedOption === opt.id}
-              onChange={() => setSelectedOption(opt.id)} // Update selected option
+              onChange={() => {setSelectedOption(opt.id) 
+                
+              }} // Update selected option
             />
             <label htmlFor={`option-${opt.id}`}>{opt.option}</label>
           </div>
         ))}
       </div>
-      <button onClick={onSubmit} disabled={loading}>
+
+      <button className="cursor-pointer" onClick={onSubmit} disabled={loading}>
         {loading ? "Submitting..." : "Next"}
       </button>
+
       {error && <p className="text-red-500">{error}</p>}
       {success && <p className="text-green-500">{success}</p>}
     </div>
