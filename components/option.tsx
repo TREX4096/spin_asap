@@ -9,6 +9,7 @@ interface QuestionProps {
   question: string;
   questionId: string;
   options: Option[];
+  ismarked: Boolean;
   handleSubmit: (optionId: string, questionId: string) => Promise<void>;
 }
 
@@ -30,7 +31,6 @@ export default function EachQuestion({ question, questionId, options, handleSubm
 
     try {
       await handleSubmit(selectedOption, questionId); 
-      console.log(questionId,selectedOption)// Call the handleSubmit function passed as a prop
       setSuccess("Your answer has been submitted successfully!");
       setSelectedOption(""); // Reset selection after submission
     } catch (error) {
@@ -44,12 +44,11 @@ export default function EachQuestion({ question, questionId, options, handleSubm
   return (
     <div>
       <p>{question}</p>
-      <h3>{questionId}</h3>
+      <h3>Question ID: {questionId}</h3>
       <label>Select an option:</label>
       <div>
         {options.map((opt) => (
           <div key={opt.id}>
-            <h1>{opt.id}</h1>
             <input
               type="radio"
               id={`option-${opt.id}`}
@@ -62,9 +61,11 @@ export default function EachQuestion({ question, questionId, options, handleSubm
           </div>
         ))}
       </div>
+
       <button onClick={onSubmit} disabled={loading}>
         {loading ? "Submitting..." : "Next"}
       </button>
+      
       {error && <p className="text-red-500">{error}</p>}
       {success && <p className="text-green-500">{success}</p>}
     </div>

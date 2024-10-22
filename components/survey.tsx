@@ -1,123 +1,106 @@
 import React, { useState, useEffect } from 'react';
+import EachQuestion from './option';
+import axios from 'axios';
+import { useRouter } from 'next/router';
 
 interface Option {
-  text: string;
-  textArabic: string;
+  id: string;
+  option: string;
 }
 
 interface Question {
   question: string;
-  questionArabic: string;
+  questionId: string;
   options: Option[];
-  correctAnswers: number[];
-  multiSelect: boolean;
+  ismarked: boolean;
 }
 
 interface Page1Props {
   questions: Question[];
   onProgressUpdate: (remaining: number) => void;
-  onSubmit: (responses: number[][]) => void;
+  userId: string;
 }
 
-const Page1: React.FC<Page1Props> = ({ questions, onProgressUpdate, onSubmit }) => {
+const Survey: React.FC<Page1Props> = ({ questions, onProgressUpdate, userId }) => {
+  const router = useRouter();
+  const unmarkedQuestions = questions.filter(question => !question.ismarked);
+
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
-  const [selectedOptions, setSelectedOptions] = useState<number[][]>(questions.map(() => []));
+  const [selectedOption, setSelectedOption] = useState<string | null>(null); // Track the selected option
 
-  const handleAnswer = (optionIndex: number) => {
-    const newSelectedOptions = [...selectedOptions];
-    const currentQuestion = questions[currentQuestionIndex];
+  const handleAnswer = async (optionIndex: string, questionId: string) => {
+    setSelectedOption(optionIndex); // Set the selected option
 
-    if (currentQuestion.multiSelect) {
-      const index = newSelectedOptions[currentQuestionIndex].indexOf(optionIndex);
-      if (index > -1) {
-        newSelectedOptions[currentQuestionIndex].splice(index, 1);
-      } else {
-        newSelectedOptions[currentQuestionIndex].push(optionIndex);
-      }
-    } else {
-      newSelectedOptions[currentQuestionIndex] = [optionIndex];
+    try {
+      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/mark/${userId}`;
+      const body = {
+        optionId: optionIndex,
+        questionId: questionId,
+      };
+
+      await axios.post(url, body); // Send the response to the backend
+      console.log("Response submitted successfully");
+    } catch (error) {
+      console.error("Error submitting answer:", error);
     }
-
-    setSelectedOptions(newSelectedOptions);
   };
 
   const handleNext = () => {
-    if (currentQuestionIndex < questions.length - 1) {
+    if (currentQuestionIndex < unmarkedQuestions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setSelectedOption(null); // Reset the selected option for the next question
+    } else {
+      // Redirect to the API endpoint after the last question
+      router.push('/api/spin'); // Adjust the URL as necessary
     }
-  };
-
-  const handlePrev = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
-    }
-  };
-
-  const handleSubmit = () => {
-    onSubmit(selectedOptions);
   };
 
   useEffect(() => {
-    const answeredQuestions = selectedOptions.filter(option => option.length > 0).length;
-    onProgressUpdate(questions.length - answeredQuestions);
-  }, [selectedOptions, onProgressUpdate, questions.length]);
+    const answeredQuestions = unmarkedQuestions.filter((_, index) => selectedOption !== null && index <= currentQuestionIndex).length;
+    onProgressUpdate(unmarkedQuestions.length - answeredQuestions);
+  }, [selectedOption, currentQuestionIndex, onProgressUpdate, unmarkedQuestions.length]);
 
-  const currentQuestion = questions[currentQuestionIndex];
+  if (unmarkedQuestions.length === 0) {
+    return <div>No unmarked questions available</div>;
+  }
+
+  const currentQuestion = unmarkedQuestions[currentQuestionIndex];
+
+  // Calculate progress percentage
+  const progressPercentage = ((currentQuestionIndex + 1) / unmarkedQuestions.length) * 100;
 
   return (
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">IIT Delhi - Abu Dhabi Admission Questions</h2>
-      <p className="mb-4">{currentQuestionIndex + 1} out of {questions.length} questions</p>
+      <p className="mb-4">{currentQuestionIndex + 1} out of {unmarkedQuestions.length} unmarked questions</p>
+      
+      {/* Progress Bar */}
+      <div className="h-4 bg-gray-200 rounded mb-4">
+        <div className="h-full bg-blue-500 rounded" style={{ width: `${progressPercentage}%` }} />
+      </div>
 
       <div className="mb-6">
-        <p className="font-semibold mb-2">{currentQuestion.question}</p>
-        <p className="font-semibold mb-2 text-right">{currentQuestion.questionArabic}</p>
-        {currentQuestion.options.map((option, optionIndex) => (
-          <div key={optionIndex} className="mb-2">
-            <label className="flex items-center">
-              <input 
-                type={currentQuestion.multiSelect ? "checkbox" : "radio"}
-                checked={selectedOptions[currentQuestionIndex].includes(optionIndex)}
-                onChange={() => handleAnswer(optionIndex)}
-                className="mr-2"
-              />
-              <span>{option.text}</span>
-            </label>
-            <p className="text-right">{option.textArabic}</p>
-          </div>
-        ))}
+        <EachQuestion
+          question={currentQuestion.question}
+          questionId={currentQuestion.questionId}
+          options={currentQuestion.options}
+          ismarked={currentQuestion.ismarked}
+          handleSubmit={handleAnswer} // Pass handleAnswer to EachQuestion
+        />
       </div>
 
       <div className="mt-4">
-        {currentQuestionIndex > 0 && (
-          <button 
-            type="button" 
-            onClick={handlePrev} 
-            className="px-4 py-2 bg-gray-500 text-white rounded mr-2"
-          >
-            Previous
-          </button>
-        )}
-        {currentQuestionIndex < questions.length - 1 ? (
-          <button 
-            type="button" 
-            onClick={handleNext} 
-            className="px-4 py-2 bg-blue-500 text-white rounded"
-          >
-            Next
-          </button>
-        ) : (
-          <button 
-            type="button" 
-            onClick={handleSubmit} 
-            className="px-4 py-2 bg-green-500 text-white rounded"
-          >
-            Submit
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={handleNext}
+          className={`px-4 py-2 rounded ${currentQuestionIndex === unmarkedQuestions.length - 1 ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'}`}
+          disabled={selectedOption === null} // Disable until an option is selected
+        >
+          {currentQuestionIndex === unmarkedQuestions.length - 1 ? 'Finish' : 'Next'}
+        </button>
       </div>
     </div>
   );
 };
 
-export default Page1;
+export default Survey;

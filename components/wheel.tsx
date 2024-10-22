@@ -31,9 +31,12 @@ const Wheel: React.FC<WheelProps> = ({ segments }) => {
   const fetchCareerPoints = async () => {
     if (session) {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/getPoints/${session?.user?.id}`);
-        setCareerPoints(response.data.careerPoints);
-        setSpinsLeft(response.data.spinsLeft) // Adjust based on your response structure
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/updatePoints/${session?.user?.id}`,{
+          points: 0,
+          spinUpdate: 0,
+        });
+        setCareerPoints(response.data.user.CareerPoints);
+        setSpinsLeft(response.data.user.spinLeft) // Adjust based on your response structure
       } catch (error) {
         console.error('Error fetching career points:', error);
       }
@@ -137,8 +140,8 @@ const Wheel: React.FC<WheelProps> = ({ segments }) => {
         try {
           if (session) {
             await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/updatePoints/${session?.user?.id}`, {
-              career_points: newCareerPoints,
-              spin_left: newSpinsLeft,
+              points: currentScenario.careerPoints,
+              spinUpdate: currentScenario.spinCommitment,
             });
           }
         } catch (error) {

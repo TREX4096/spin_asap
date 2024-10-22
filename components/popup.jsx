@@ -26,12 +26,12 @@ const PopupGfg = ({
       }
 
       try {
-        const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/getuncompletedForms/${session.user.id}`; // Remove colon
+        const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/getFormid/${process.env.NEXT_PUBLIC_ADMIN_ID}/${session.user.id}`; // Remove colon
         const response = await axios.post(url);
         
         // Assuming the response contains an array of valid form indices
         const validFormRoutes = response.data
-          .filter((index) => index > 1) // Ensure the index is a number
+           // Ensure the index is a number
           .map((index) => `/api/survey${index}`); // Map to appropriate route
 
         setFormRoutes(validFormRoutes);
