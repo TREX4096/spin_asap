@@ -22,6 +22,7 @@ export default function Dashboard() {
   const [sessionUsers, setSessionUsers] = useState([])
   const [form, setForms] = useState([])
   const [isPopupOpen, setPopupOpen] = useState(false);
+  const [isLoading, setisLoading] = useState(false);
 
 
   const modeContext = useContext(AppModeContext);
@@ -60,6 +61,31 @@ export default function Dashboard() {
 
 
   }, [])
+  
+  const handleMegaLeaderBoardRestart = async () => {
+    try {
+      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/resetLeaderBoard`
+
+
+      const response = await axios.post(url);
+      setisLoading(true)
+      if(response.status===200){
+        getUsers()
+      }
+
+     
+
+
+    } catch (error: any) {
+      // Axios error objects contain the response inside error.response
+      if (error.response) {
+        console.error('Error fetching forms:', error.response.status, error.response.data);
+      } else {
+        console.error('Error fetching forms:', error.message);
+      }
+    }
+  };
+
 
 
 
@@ -105,7 +131,7 @@ export default function Dashboard() {
           <div>
 
 
-          <TimerCard heading='MegaLeaderBoard' popup={isPopupOpen} setPopup={setPopupOpen}/>
+          <TimerCard heading='MegaLeaderBoard' popup={isPopupOpen} setPopup={setPopupOpen} />
           <TimerCard heading='Session LeaderBoard' popup={isPopupOpen} setPopup={setPopupOpen}/>
 
           </div>
