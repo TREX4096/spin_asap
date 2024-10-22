@@ -26,7 +26,7 @@ export default function Dashboard() {
 useEffect(() => {
   const getForms = async () => {
     try {
-      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/getForm/${process.env.NEXT_PUBLIC_ADMIN_ID}`;
+      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/getFormWithId/${process.env.NEXT_PUBLIC_ADMIN_ID}`;
 
       const response = await axios.get(url);
       const data = response.data;
