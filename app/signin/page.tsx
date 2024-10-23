@@ -5,8 +5,12 @@ import Head from 'next/head';
 import axios, { AxiosError } from 'axios';
 import { signIn } from "next-auth/react"
 import userContext from '@/context/userContext';
+import  {useRouter} from "next/navigation"
 
 const SignInPage = () => {
+
+  const router = useRouter()
+
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
@@ -47,8 +51,9 @@ const SignInPage = () => {
       // Handle successful login, redirect to the desired page
       if((response.status===200)||(response.status===201)){
         localStorage.setItem('userId', response.data.user.id);
-      window.location.href = '/api/hello';} // Adjust as needed
-
+      // window.location.href = '/api/hello';} // Adjust as needed
+          console.log(response.status);}
+          
       else{
         console.log(response);
         
