@@ -1,55 +1,91 @@
 // pages/signin.tsx
 "use client"
-import { signIn } from 'next-auth/react';
-import { useState } from 'react';
+import { useState,useContext } from 'react';
 import Head from 'next/head';
+import axios, { AxiosError } from 'axios';
+import { signIn } from "next-auth/react"
+import userContext from '@/context/userContext';
+import  {useRouter} from "next/navigation"
 
 const SignInPage = () => {
+
+  const router = useRouter()
+
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('male');
-  
+
   // State for Admin login flow
   const [isAdmin, setIsAdmin] = useState(false); // Toggle between user and admin
   const [adminName, setAdminName] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [secretKey, setSecretKey] = useState(''); // Admin secret key
 
-  // Handle regular user sign-in
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const res = await signIn('credentials', {
-      email,
-      name,
-      age,
-      gender,
-      redirect: false, // Prevent redirection
-    });
+  const UserContext = useContext(userContext);
+  if (!UserContext) { throw new Error('AdminContextProvider is missing'); }
+  const { setUserId } = UserContext;
 
-    if (res?.error) {
-      alert('Invalid credentials');
-    } else {
-      // Redirect to homepage or wherever you want after successful login
-      window.location.href = '/api/hello';
+  const handleUserLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!email || !name || !age || !gender) {
+      alert('Please fill out all fields');
+      return;
+    }
+
+    const body = {
+      name,
+      email,
+      gender,
+      age,
+    };
+
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/auth/${process.env.NEXT_PUBLIC_ADMIN_ID}`,
+        body
+      );
+
+      console.log(response);
+      // Handle successful login, redirect to the desired page
+      if((response.status===200)||(response.status===201)){
+        localStorage.setItem('userId', response.data.user.id);
+      // window.location.href = '/api/hello';} // Adjust as needed
+          console.log(response.status);}
+          
+      else{
+        console.log(response);
+        
+      }
+    } catch (error:any) {
+      alert(error.response?.data?.message || 'Invalid credentials');
     }
   };
 
-  // Handle admin sign-in
-  const handleAdminSubmit = async (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await signIn('admin-credentials', {
-      secretKey,
-      adminName,
-      adminPassword,
-      redirect: false,
-    });
 
-    if (res?.error) {
-      alert('Invalid admin credentials');
-    } else {
-      // Redirect to admin dashboard or any other page
-      window.location.href = '/admin/dashboard';
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/login`,
+        {
+          secretKey: secretKey,
+          username: adminName,
+          password: adminPassword,
+        }
+      );
+
+      // Handle successful admin login, redirect to the admin dashboard
+      if(response.status===200){
+        window.location.href = '/admin/dashboard';} // Adjust as needed
+  
+        else{
+          console.log(response);
+          
+        }
+    } catch (error:any) {
+      alert(error.response?.data?.message || 'Invalid admin credentials');
     }
   };
 
@@ -59,11 +95,11 @@ const SignInPage = () => {
         <title>{isAdmin ? 'Admin Sign In' : 'Sign In'}</title>
       </Head>
       <h1 className="text-3xl font-bold mb-4">{isAdmin ? 'Admin Sign In' : 'Sign In'}</h1>
-      
+
       {/* Toggle for Admin */}
       <div className="mb-4">
-        <button 
-          onClick={() => setIsAdmin(!isAdmin)} 
+        <button
+          onClick={() => setIsAdmin(!isAdmin)}
           className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
         >
           {isAdmin ? 'Sign in as User' : 'Join as Admin'}
@@ -72,7 +108,7 @@ const SignInPage = () => {
 
       {/* Regular User Sign In Form */}
       {!isAdmin && (
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md">
+        <form onSubmit={handleUserLogin} className="bg-white p-6 rounded shadow-md">
           <div className="mb-4">
             <label htmlFor="email" className="block text-sm font-medium mb-2">Email</label>
             <input
@@ -131,7 +167,7 @@ const SignInPage = () => {
 
       {/* Admin Sign In Form */}
       {isAdmin && (
-        <form onSubmit={handleAdminSubmit} className="bg-white p-6 rounded shadow-md">
+        <form onSubmit={handleAdminLogin} className="bg-white p-6 rounded shadow-md">
           <div className="mb-4">
             <label htmlFor="secretKey" className="block text-sm font-medium mb-2">Secret Key</label>
             <input

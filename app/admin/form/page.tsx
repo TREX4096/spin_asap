@@ -27,7 +27,9 @@ useEffect(() => {
   const getForms = async () => {
     try {
       const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/getFormWithId/${process.env.NEXT_PUBLIC_ADMIN_ID}`;
-
+      
+      console.log(url);
+      
       const response = await axios.get(url);
       const data = response.data;
       console.log(data);
