@@ -25,7 +25,7 @@ interface Form {
 export default function CareerFairSurvey() {
   
   const UserContext = useContext(userContext);
-  const session = useSession()
+  const { data: session } = useSession();
   if (!UserContext) { throw new Error('AdminContextProvider is missing'); }
   const { UserId } = UserContext;
 
@@ -36,8 +36,7 @@ export default function CareerFairSurvey() {
   const userId = localStorage.getItem('userId')  // Ensure this is set correctly
  
   const setLocalstorage = ()=>{
-    console.log(session?.user?.id);
-    
+    console.log(session?.user?.id);   
     localStorage.setItem('userId', session?.user?.id);
   }
 
@@ -63,7 +62,7 @@ export default function CareerFairSurvey() {
         setLoading(false);
       }
     };
-    setLocalstorage
+    setLocalstorage()
     getForms();
   }, [userId]); // Runs once when the component mounts
 

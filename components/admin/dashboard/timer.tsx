@@ -50,7 +50,7 @@ const TimerCard = ({heading,popup,setPopup,resetOrNot,task, setFunctionName}:tim
                     <span>{
                         task.timeLeft !== null ?
                     `Time Left:- ${task.timeLeft}` :
-                    `Task Completed click on update to start new Session`
+                    `Task Completed`
                     }</span>
                 </div>
                 <div className='flex flex-row gap-2'>

@@ -28,8 +28,12 @@ const Form: React.FC<FormProps> = ({ form, formIndex }) => {
   const handleDelete = async (formId: string) => {
     try {
       // Make a DELETE request to your API endpoint
-      const response = await axios.delete(`/api/forms/${formId}`);
-  
+      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/delete/${formId}`
+      const response = await axios.delete(url);
+        
+      if(response.status===200){
+        alert("Form Deleted Successfully")
+      }
       // Log success message or handle successful response
       console.log(response.data.message); // Display the success message
       // Optionally, you can update your state or UI to reflect the deletion

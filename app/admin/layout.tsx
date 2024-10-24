@@ -33,6 +33,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <Link href={"dashboard"}>Dashboard</Link>
           <Link href={"form"}>Form</Link>
           <Link href={"results"}>Result</Link>
+          <Link href={"createform"}>Add</Link>
         </div>
           
           <div className= 'flex flex-row items-center gap-2 cursor-pointer' onClick={() => setLightMode(!lightmode)}>
